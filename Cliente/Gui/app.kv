@@ -1,0 +1,194 @@
+<MainWindow>:
+    GridLayout:
+        cols:1
+        Label:
+            text: "Selecciona un tipo de conexion"
+            font_size: (root.width**2 + root.height**2) / 14**4
+
+        GridLayout:
+            cols:2
+            Button:
+
+                text: "Modo manual"
+                on_release:
+                    app.root.current = "Manual"
+                    root.manager.transition.direction = "left"
+
+            Button:
+     
+                text: "Modo automatico"
+                on_release:
+                    app.root.current = "Auto"
+                    root.manager.transition.direction = "left"
+
+
+
+<Automatico>:
+    err1 : err1
+
+    GridLayout:
+        cols:1
+        Label:
+            id: err1
+            text: "Se buscara automaticamente el dispositivo"
+            font_size: (root.width**2 + root.height**2) / 14**4
+        GridLayout:
+            cols:2
+            Button:
+                text: "Conectar"
+                on_press:
+                    root.searching()
+
+                on_release:
+                    root.err1.text: "Buscando el servicio en los dispositivos cercanos"
+                    root.manager.transition.direction = "right"
+                    root.auto()
+
+
+            Button:
+                text: "Atras"
+                on_release:
+                    app.root.current = "Main"
+                    root.manager.transition.direction = "right" 
+                    root.reset()
+
+
+<Manual>:
+    direc : dir
+    err2 : err2
+    
+    GridLayout:
+        cols:1
+        GridLayout:
+            cols:1
+            Label:
+                id: err2
+                text: "Escribe la direccion Mac bluetooth del dispositivo"
+                font_size: (root.width**2 + root.height**2) / 14**4
+            TextInput:
+                id: dir
+                multiline: False
+                font_size: (root.width**2 + root.height**2) / 14**4
+        GridLayout:
+            cols:2
+            Button:
+                text: "Conectar"
+                on_press:
+                    root.searching()
+
+                on_release:
+                    root.manager.transition.direction = "left"
+                    root.manual()
+            Button:
+                text: "Atras"
+                on_release:
+                    app.root.current = "Main"
+                    root.manager.transition.direction = "right"
+                    root.reset()
+
+<Menu>:
+    GridLayout:
+        cols:1
+        Label:
+            text: "Menu Principal"
+            font_size: (root.width**2 + root.height**2) / 14**4
+
+        BoxLayout:
+            orientation: 'vertical'
+            Button:
+
+                text: "Recibir datos en tiempo real"
+                on_release:
+                    app.root.current = "TR"
+                    root.manager.transition.direction = "left"
+
+            Button:
+     
+                text: "Generar archivo de datos en el dispositivo"
+                on_release:
+                    app.root.current = "csv"
+                    root.manager.transition.direction = "left"
+                    root.csv()
+    
+            Button:
+     
+                text: "Recibir archivo de datos"
+                on_release:
+                    root.recibir()
+
+
+            Button:
+     
+                text: "Salir"
+                on_release:
+                    app.stop()
+
+
+<TiempoReal>:
+    times : times
+    acc : accel
+    comp : compass
+    gyr : gyro
+    fusion : fusionQPose
+    btn : btn
+
+    GridLayout:
+        cols:1
+        Label:
+            id: times
+            pos_hint:{"x": 1, "top":0.9}
+            size_hint:0.8, 0.2
+            text: "Timestamp: "
+        Label:
+            id: accel
+            pos_hint:{"x": 1, "top":0.9}
+            size_hint:0.8, 0.2
+            text: "Accel: "
+        Label:
+            id: compass
+            pos_hint:{"x": 1, "top":0.9}
+            size_hint:0.8, 0.2
+            text: "Compass: "
+        Label:
+            id: gyro
+            pos_hint:{"x": 1, "top":0.9}
+            size_hint:0.8, 0.2
+            text: "Gyro: "
+        Label:
+            id: fusionQPose
+            pos_hint:{"x": 1, "top":0.9}
+            size_hint:0.8, 0.2
+            text: "fusionQPose: "
+
+        GridLayout:
+            cols:2
+            Button:
+                id: btn
+                text: "Start"
+                on_release:
+                    root.change()
+            Button:
+                text: "Atras"
+                on_release:
+                    app.root.current = "Menu"
+                    root.manager.transition.direction = "left"
+                    root.stop()
+
+<Csv>:
+    GridLayout:
+        cols:1
+        Label:
+            text: "Recogiendo datos en el dispositivo..."
+            font_size: (root.width**2 + root.height**2) / 14**4
+
+        
+        Button:
+
+            text: "Parar"
+            on_release:
+                app.root.current = "Menu"
+                root.manager.transition.direction = "right"
+                root.stop()
+
+
+

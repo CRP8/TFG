@@ -1,0 +1,11 @@
+[Unit]
+Description=Script de inicio TFG
+After=network.target
+ 
+[Service]
+ExecStart=/home/pi/tfg/piscript.sh
+Type=oneshot
+RemainAfterExit=true
+ 
+[Install]
+WantedBy=default.target

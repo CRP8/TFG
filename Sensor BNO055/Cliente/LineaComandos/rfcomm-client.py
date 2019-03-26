@@ -14,6 +14,35 @@ def parar():
 
     return
 
+def show_calibrate():
+    while True:
+        sys = sock.recv(1024)
+        recibido = sys.decode('utf-8')
+        if recibido == "Detenido":
+            print ("Server responde: ", recibido)
+            break
+        else:
+            #timestamp = sock.recv(1024)
+            sock.send("Sync")
+            gyro = sock.recv(1024)
+            sock.send("Sync")
+            accel = sock.recv(1024)
+            sock.send("Sync")
+            mag = sock.recv(1024)
+        
+            
+            print('0=sin calibrar and 3=calibrado')
+            print('Sys_cal={0} Gyro_cal={1} Accel_cal={2} Mag_cal={3}'.format(sys, gyro, accel, mag))
+            print()
+            
+            if opcion == False:
+                sock.send("Stop")
+            else:
+                sock.send("Sync")
+
+    print("Terminado")
+    return
+
 def tReal():
     while True:
         timestamp = sock.recv(1024)
@@ -39,13 +68,13 @@ def tReal():
             grav = sock.recv(1024)      
 
             print("Timestamp: ", timestamp.decode('utf-8'))
-            print("Euler: ", euler.decode('utf-8'))
-            print("Quaternion: ", quaternion.decode('utf-8'))
-            print("Magnetometro: ", mag.decode('utf-8'))
-            print("Giroscopio: ", gyro.decode('utf-8'))
-            print("Acelerometro: ", acc.decode('utf-8'))
-            print("Aceleracion lineal: ", mov.decode('utf-8'))
-            print("Aceleracion gravedad: ", grav.decode('utf-8'))
+            print("Euler x, y, z: ", euler.decode('utf-8'))
+            print("Quaternion x, y, z, w: ", quaternion.decode('utf-8'))
+            print("Magnetometro x, y, z: ", mag.decode('utf-8'))
+            print("Giroscopio x, y, z: ", gyro.decode('utf-8'))
+            print("Acelerometro x, y, z: ", acc.decode('utf-8'))
+            print("Aceleracion lineal x, y, z: ", mov.decode('utf-8'))
+            print("Aceleracion gravedad x, y, z: ", grav.decode('utf-8'))
             print()
             
             if opcion == False:
@@ -66,27 +95,36 @@ def tRealcurses():
         timestamp = sock.recv(1024)
         recibido = timestamp.decode('utf-8')
         if recibido == "Detenido":
+            print ("Server responde: ", recibido)
             break
         else:
             #timestamp = sock.recv(1024)
             sock.send("Sync")
-            accel = sock.recv(1024)
+            euler = sock.recv(1024)
             sock.send("Sync")
-            compass = sock.recv(1024)
+            quaternion = sock.recv(1024)
+            sock.send("Sync")
+            mag = sock.recv(1024)
             sock.send("Sync")
             gyro = sock.recv(1024)
             sock.send("Sync")
-            fusionQPose = sock.recv(1024)   
-
+            acc = sock.recv(1024)   
+            sock.send("Sync")
+            mov = sock.recv(1024)   
+            sock.send("Sync")
+            grav = sock.recv(1024)      
 
             fullscreen.clear()
             fullscreen.border(0)
-            fullscreen.addstr(1,1,"timestamp: {}".format(int(timestamp.decode('utf-8'))))
-            fullscreen.addstr(3,1,"accel x, y, z: {}".format(accel.decode('utf-8')))
-            fullscreen.addstr(5,1,"compass x, y, z: {}".format(compass.decode('utf-8')))
-            fullscreen.addstr(7,1,"gyro x, y, z: {}".format(gyro.decode('utf-8')))
-            fullscreen.addstr(9,1,"fusionQPose 0, 1, 2, 3: {}".format(fusionQPose.decode('utf-8')))
-            fullscreen.addstr(14,1,"Presiona q para salir...")
+            fullscreen.addstr(1,1,"timestamp: {}".format(timestamp.decode('utf-8')))
+            fullscreen.addstr(3,1,"Euler x, y, z: {}".format(euler.decode('utf-8')))
+            fullscreen.addstr(5,1,"Quaternion x, y, z, w: {}".format(quaternion.decode('utf-8')))
+            fullscreen.addstr(7,1,"Magnetometro x, y, z: {}".format(mag.decode('utf-8')))
+            fullscreen.addstr(9,1,"Giroscopio x, y, z: {}".format(gyro.decode('utf-8')))
+            fullscreen.addstr(11,1,"Acelerometro x, y, z: {}".format(acc.decode('utf-8')))
+            fullscreen.addstr(13,1,"Aceleracion lineal x, y, z: {}".format(mov.decode('utf-8')))
+            fullscreen.addstr(15,1,"Aceleracion gravedad x, y, z: {}".format(grav.decode('utf-8')))
+            fullscreen.addstr(17,1,"Presiona q para salir...")
             
             fullscreen.refresh()
             key = fullscreen.getch()
@@ -159,10 +197,11 @@ while True:
         print ("1 - Recibir datos en tiempo real")
         print ("2 - Recibir datos en tiempo real (En la consola)")
         print ("3 - Para generar archivo de datos en el dispositivo")
+        print ("4 - Para calibrar el sensor")
         if generado == True:
-            print ("4 - Para Recibir el archivo de datos")
+            print ("5 - Para Recibir el archivo de datos")
     if opcion == True:
-        print ("5 - Parar")
+        print ("6 - Parar")
     print ("0 - Salir")
 
 
@@ -187,7 +226,7 @@ while True:
         tRealcurses()
     elif data == "2":
         sock.send("Treal")
-        print ("Opcion enviada, pulsa cualquier tecla para detener...")
+        print ("Opcion enviada, pulsa enter para detener...")
         opcion = True
         threads = list()
         t = threading.Thread(target=parar)
@@ -200,11 +239,21 @@ while True:
         generado = True
         sock.send("Genera")
         print ("Opcion enviada...")
+
     elif data == "4":
+        sock.send("Calibrate")
+        print ("Opcion enviada, pulsa enter para detener...")
+        opcion = True
+        threads = list()
+        t = threading.Thread(target=parar)
+        threads.append(t)
+        t.start()
+        show_calibrate()
+    elif data == "5":
         generado = False
         sock.send("Envia")
         recibir()
-    elif data == "5":
+    elif data == "6":
         if opcion == True:
             sock.send("Stop")
             opcion = False

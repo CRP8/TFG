@@ -14,6 +14,34 @@ logging.getLogger().setLevel(logging.WARNING)
 
 bno = BNO055.BNO055(serial_port='/dev/serial0', rst=17)
 
+def calibrate():
+    if not bno.begin():
+        raise RuntimeError('Failed to initialize BNO055! Is the sensor connected?')
+    while True:
+
+        #Lectura del estado del calibrado, 0=sin calibrar and 3=calibrado.
+        sys, gyro, accel, mag = bno.get_calibration_status()
+        
+        logging.info("Enviando datos...")
+        client_sock.send(str(sys).encode())
+        data2 = client_sock.recv(1024)
+        client_sock.send(str(gyro).encode())
+        data2 = client_sock.recv(1024)
+        client_sock.send(str(accel).encode())
+        data2 = client_sock.recv(1024)
+        client_sock.send(str(mag).encode())
+
+        data2 = client_sock.recv(1024)
+        recibido = data2.decode('utf-8')
+        if recibido == "Stop":
+            logging.info("Detenido....")
+            client_sock.send("Detenido")
+            break
+        logging.info("Enviado...")
+        
+    logging.info("Terminado, esperando...")
+    return
+
 def tiempo_real():
     #Inicializacion
     bno_data = {}
@@ -32,7 +60,7 @@ def tiempo_real():
         bno_data['mag'] = bno.read_magnetometer()
         # Gyroscope (grados por segundo):
         bno_data['gyro'] = bno.read_gyroscope()
-        # Acelerometro data (metros por segundo al cuadrado):
+        # Acelerometro (metros por segundo al cuadrado):
         bno_data['acc'] = bno.read_accelerometer()
         # Aceleracion lineal (movimiento, no gravedad)
         # (metros por segundo al cuadrado):
@@ -171,6 +199,9 @@ while True:
             elif recibido == "Treal":
                 cont = True
                 tiempo_real()
+            elif recibido == "Calibrate":
+                cont = True
+                calibrate()
     
             elif recibido == "Genera":
                 cont = True

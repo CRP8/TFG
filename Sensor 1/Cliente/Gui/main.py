@@ -24,7 +24,6 @@ class Automatico(Screen):
         self.err1.text = "Buscando el servicio en los dispositivos cercanos"
 
     def auto(self):
-        #con = connect(sock, "B8:27:EB:3E:7F:C1")
         con = connect(sock, "None")
 
         if con == 0:

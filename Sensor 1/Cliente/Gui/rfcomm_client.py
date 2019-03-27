@@ -28,7 +28,6 @@ def recibir(sock):
 
 
 def connect(sock, direc):
-    # addr = "B8:27:EB:3E:7F:C1"
     ret = 0
     if direc == "None":
         addr = None

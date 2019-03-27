@@ -116,6 +116,12 @@
                 on_release:
                     root.recibir()
 
+            Button:
+     
+                text: "Calibrar sensores"
+                on_release:
+                    app.root.current = "cal"
+                    root.manager.transition.direction = "left"          
 
             Button:
      
@@ -126,10 +132,13 @@
 
 <TiempoReal>:
     times : times
-    acc : accel
-    comp : compass
-    gyr : gyro
-    fusion : fusionQPose
+    euler : euler
+    quaternion : quaternion
+    mag : mag
+    gyro : gyro
+    acc : acc
+    mov : mov
+    grav : grav
     btn : btn
 
     GridLayout:
@@ -140,25 +149,40 @@
             size_hint:0.8, 0.2
             text: "Timestamp: "
         Label:
-            id: accel
+            id: euler
             pos_hint:{"x": 1, "top":0.9}
             size_hint:0.8, 0.2
-            text: "Accel: "
+            text: "Euler: "
         Label:
-            id: compass
+            id: quaternion
             pos_hint:{"x": 1, "top":0.9}
             size_hint:0.8, 0.2
-            text: "Compass: "
+            text: "Quaternion: "
+        Label:
+            id: mag
+            pos_hint:{"x": 1, "top":0.9}
+            size_hint:0.8, 0.2
+            text: "Magnetometro: "
         Label:
             id: gyro
             pos_hint:{"x": 1, "top":0.9}
             size_hint:0.8, 0.2
-            text: "Gyro: "
+            text: "Gyroscopio: "
         Label:
-            id: fusionQPose
+            id: acc
             pos_hint:{"x": 1, "top":0.9}
             size_hint:0.8, 0.2
-            text: "fusionQPose: "
+            text: "Acelerometro: "
+        Label:
+            id: mov
+            pos_hint:{"x": 1, "top":0.9}
+            size_hint:0.8, 0.2
+            text: "Aceleracion lineal: "
+        Label:
+            id: grav
+            pos_hint:{"x": 1, "top":0.9}
+            size_hint:0.8, 0.2
+            text: "Aceleracion gravedad: "
 
         GridLayout:
             cols:2
@@ -173,6 +197,55 @@
                     app.root.current = "Menu"
                     root.manager.transition.direction = "left"
                     root.stop()
+
+<Calibrate>:
+    sys : sys
+    gyro : gyro
+    accel : accel
+    mag : mag
+    btn : btn
+
+    GridLayout:
+        cols:1
+        Label:
+            id: info
+            pos_hint:{"x": 1, "top":0.9}
+            size_hint:0.8, 0.2
+            text: "0 = sin calibrar     3 = calibrado"
+        Label:
+            id: sys
+            pos_hint:{"x": 1, "top":0.9}
+            size_hint:0.8, 0.2
+            text: "Sys cal: "
+        Label:
+            id: gyro
+            pos_hint:{"x": 1, "top":0.9}
+            size_hint:0.8, 0.2
+            text: "Gyro cal: "
+        Label:
+            id: accel
+            pos_hint:{"x": 1, "top":0.9}
+            size_hint:0.8, 0.2
+            text: "Accel cal: "
+        Label:
+            id: mag
+            pos_hint:{"x": 1, "top":0.9}
+            size_hint:0.8, 0.2
+            text: "Mag cal: "
+
+        GridLayout:
+            cols:2
+            Button:
+                id: btn
+                text: "Start"
+                on_release:
+                    root.change()
+            Button:
+                text: "Atras"
+                on_release:
+                    app.root.current = "Menu"
+                    root.manager.transition.direction = "left"
+                    root.resetBtn()
 
 <Csv>:
     GridLayout:

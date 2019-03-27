@@ -22,7 +22,6 @@ def show_calibrate():
             print ("Server responde: ", recibido)
             break
         else:
-            #timestamp = sock.recv(1024)
             sock.send("Sync")
             gyro = sock.recv(1024)
             sock.send("Sync")
@@ -31,7 +30,7 @@ def show_calibrate():
             mag = sock.recv(1024)
         
             
-            print('0=sin calibrar and 3=calibrado')
+            print('0 = sin calibrar     3 = calibrado')
             print('Sys_cal={0} Gyro_cal={1} Accel_cal={2} Mag_cal={3}'.format(sys, gyro, accel, mag))
             print()
             
@@ -51,7 +50,6 @@ def tReal():
             print ("Server responde: ", recibido)
             break
         else:
-            #timestamp = sock.recv(1024)
             sock.send("Sync")
             euler = sock.recv(1024)
             sock.send("Sync")

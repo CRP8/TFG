@@ -233,13 +233,23 @@
             size_hint:0.8, 0.2
             text: "Mag cal: "
 
-        GridLayout:
-            cols:2
+        BoxLayout:
+            orientation: 'vertical'
             Button:
                 id: btn
                 text: "Start"
                 on_release:
                     root.change()
+            Button:
+                id: save
+                text: "Guardar calibrado"
+                on_release:
+                    root.save()
+            Button:
+                id: load
+                text: "Cargar ultimo calibrado"
+                on_release:
+                    root.load()
             Button:
                 text: "Atras"
                 on_release:

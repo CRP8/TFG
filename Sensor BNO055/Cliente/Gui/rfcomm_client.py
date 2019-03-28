@@ -9,7 +9,6 @@ import logging
 logging.getLogger().setLevel(logging.WARNING)
 
 def recibir(sock):
-    sock.send("Envia")
     logging.info("Recibiendo archivo...")
     f = open("Datos_Sensor.csv", "wb")
     data = sock.recv(1024)

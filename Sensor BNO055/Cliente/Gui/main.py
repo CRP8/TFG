@@ -4,6 +4,8 @@ from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.properties import ObjectProperty
 from kivy.clock import Clock
+from kivy.uix.popup import Popup
+from kivy.uix.label import Label
 from rfcomm_client import *
 #import logging
 
@@ -60,7 +62,15 @@ class Menu(Screen):
         sock.send("Genera")
 
     def recibir(self):
-        recibir(sock)
+        sock.send("Envia")
+        ret = sock.recv(1024)
+        recibido = ret.decode('utf-8')
+        if recibido == "Error":
+            noFile()
+        else:
+            sock.send("Sync")
+            recibir(sock)
+            fileRec()
 
 
 class TiempoReal(Screen):
@@ -207,6 +217,17 @@ class Calibrate(Screen):
             self.accel.text = "Accel cal: "
             self.mag.text = "Mag cal: "
 
+    def save(self):
+        sock.send("Save")
+
+    def load(self):
+        sock.send("Load")
+        ret = sock.recv(1024)
+        recibido = ret.decode('utf-8')
+        if recibido == "Error":
+            noCofig()
+        else:
+            fileConfig()
 
     def resetBtn(self):
         if self.btn.text == "Stop":
@@ -218,7 +239,6 @@ class Calibrate(Screen):
             self.gyro.text = "Gyro cal: "
             self.accel.text = "Accel cal: "
             self.mag.text = "Mag cal: "
-
 
     def start(self):
         # Clock.schedule_once(self.RealTime)
@@ -236,6 +256,34 @@ class Csv(Screen):
     def stop(self):
         sock.send("Stop")
         dummy = sock.recv(1024)
+
+
+def noFile():
+    pop = Popup(title='Error',
+                content=Label(text='No se ha generado ningun archivo'),
+                size_hint=(None, None), size=(400, 400))
+    pop.open()
+
+
+def fileRec():
+    pop = Popup(title='Recibido',
+                content=Label(text='Archivo recibido'),
+                size_hint=(None, None), size=(400, 400))
+    pop.open()
+
+
+def noCofig():
+    pop = Popup(title='Error',
+                content=Label(text='No hay ningun archivo de calibrado'),
+                size_hint=(None, None), size=(400, 400))
+    pop.open()
+
+
+def fileConfig():
+    pop = Popup(title='Cargado',
+                content=Label(text='Archivo de calibrado cargado'),
+                size_hint=(None, None), size=(400, 400))
+    pop.open()
 
 
 kv = Builder.load_file("app.kv")

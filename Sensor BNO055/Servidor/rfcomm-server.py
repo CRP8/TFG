@@ -237,10 +237,12 @@ while True:
             elif recibido == "Load":
                 my_file = Path("calibration.json")
                 if my_file.is_file():
-                    load_calibration()
-                    client_sock.send("ok")
+                    if load_calibration() == 0:
+                        client_sock.send("ok")
+                    else:
+                        client_sock.send("Error2")
                 else:
-                    client_sock.send("Error")
+                    client_sock.send("Error1")
     
             elif recibido == "Genera":
                 cont = True

@@ -275,8 +275,12 @@ while True:
         sock.send("Load")
         ret = sock.recv(1024)
         recibido = ret.decode('utf-8')
-        if recibido == "Error":
+        if recibido == "Error1":
             print("No hay ningun archivo de calibrado")
+
+        elif recibido == "Error2":
+            print("No se ha cargado el calibrado debido a un error")
+
         else:
             print("Archivo de calibrado cargado")
 

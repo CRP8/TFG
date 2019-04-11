@@ -171,7 +171,7 @@ class Calibrate(Screen):
     gyro = ObjectProperty(None)
     accel = ObjectProperty(None)
     mag = ObjectProperty(None)
-    end = False
+    end = True
     reset = False
 
     def change(self):
@@ -206,7 +206,6 @@ class Calibrate(Screen):
 
                 if self.end == True:
                     sock.send("Stop")
-                    self.end = False
                 else:
                     sock.send("Sync")
 
@@ -218,16 +217,27 @@ class Calibrate(Screen):
             self.mag.text = "Mag cal: "
 
     def save(self):
-        sock.send("Save")
+        if self.end == True:
+            sock.send("Save")
+            saveConfig()
+        else:
+            stopFirst()
 
     def load(self):
-        sock.send("Load")
-        ret = sock.recv(1024)
-        recibido = ret.decode('utf-8')
-        if recibido == "Error":
-            noCofig()
+        if self.end == True:
+            sock.send("Load")
+            ret = sock.recv(1024)
+            recibido = ret.decode('utf-8')
+            if recibido == "Error1":
+                noCofig()
+
+            elif recibido == "Error2":
+                errorCofig()
+
+            else:
+                fileConfig()
         else:
-            fileConfig()
+            stopFirst()
 
     def resetBtn(self):
         if self.btn.text == "Stop":
@@ -243,6 +253,7 @@ class Calibrate(Screen):
     def start(self):
         # Clock.schedule_once(self.RealTime)
         self.btn.text = "Stop"
+        self.end = False
         threading.Thread(target=self.RealTime).start()
 
     def stop(self):
@@ -279,9 +290,32 @@ def noCofig():
     pop.open()
 
 
+def errorCofig():
+    pop = Popup(title='Error',
+                content=Label(
+                    text='No se ha cargado el calibrado debido a un error'),
+                size_hint=(None, None), size=(400, 400))
+    pop.open()
+
+
 def fileConfig():
     pop = Popup(title='Cargado',
                 content=Label(text='Archivo de calibrado cargado'),
+                size_hint=(None, None), size=(400, 400))
+    pop.open()
+
+
+def saveConfig():
+    pop = Popup(title='Guardado',
+                content=Label(text='Se guardo el estado del calibrado'),
+                size_hint=(None, None), size=(400, 400))
+    pop.open()
+
+
+def stopFirst():
+    pop = Popup(title='Stop',
+                content=Label(
+                    text='Pusle el boton para parar la recepcion de datos antes'),
                 size_hint=(None, None), size=(400, 400))
     pop.open()
 

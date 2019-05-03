@@ -5,6 +5,8 @@ import curses
 import time
 
 
+opcion = False
+
 def parar():
     global opcion
 
@@ -16,7 +18,7 @@ def parar():
     return
 
 
-def show_calibrate():
+def show_calibrate(sock):
     while True:
         sys = sock.recv(1024)
         recibido = sys.decode('utf-8')
@@ -45,7 +47,7 @@ def show_calibrate():
     return
 
 
-def tReal():
+def tReal(sock):
     while True:
         timestamp = sock.recv(1024)
         recibido = timestamp.decode('utf-8')
@@ -87,7 +89,7 @@ def tReal():
     return
 
 
-def tRealcurses():
+def tRealcurses(sock):
     fullscreen = curses.initscr()
     fullscreen.border(0)
     fullscreen.nodelay(True)
@@ -148,7 +150,7 @@ def tRealcurses():
     return
 
 
-def recibir():
+def recibir(sock):
     print("Recibiendo archivo...")
     f = open("Datos_Sensor.csv", "wb")
     data = sock.recv(1024)
@@ -167,135 +169,140 @@ def recibir():
 
 
 if sys.version < '3':
-    input = raw_input
+		input = raw_input
 
-addr = None
+def main():
 
-if len(sys.argv) < 2:
-    print("Buscando el servicio en los dispositivos cercanos")
-else:
-    addr = sys.argv[1]
-    print("Buscando el servicio en %s" % addr)
+	addr = None
 
-# search for the SampleServer service
-uuid = "94f39d29-7d6d-437d-973b-fba39e49d4ee"
-service_matches = find_service(uuid=uuid, address=addr)
+	if len(sys.argv) < 2:
+		print("Buscando el servicio en los dispositivos cercanos")
+	else:
+		addr = sys.argv[1]
+		print("Buscando el servicio en %s" % addr)
 
-if len(service_matches) == 0:
-    print("No se pudo encontrar el servicio =(")
-    sys.exit(0)
+	# search for the SampleServer service
+	uuid = "94f39d29-7d6d-437d-973b-fba39e49d4ee"
+	service_matches = find_service(uuid=uuid, address=addr)
 
-first_match = service_matches[0]
-port = first_match["port"]
-name = first_match["name"]
-host = first_match["host"]
+	if len(service_matches) == 0:
+		print("No se pudo encontrar el servicio =(")
+		sys.exit(0)
 
-print("Conectando a \"%s\" en %s" % (name, host))
+	first_match = service_matches[0]
+	port = first_match["port"]
+	name = first_match["name"]
+	host = first_match["host"]
 
-# Create the client socket
-sock = BluetoothSocket(RFCOMM)
-sock.connect((host, port))
+	print("Conectando a \"%s\" en %s" % (name, host))
 
-opcion = False
+	# Create the client socket
+	sock = BluetoothSocket(RFCOMM)
+	sock.connect((host, port))
 
-while True:
-    print("Elije una opcion:")
-    print()
-    if opcion == False:
-        print("1 - Recibir datos en tiempo real")
-        print("2 - Recibir datos en tiempo real (En la consola)")
-        print("3 - Para generar archivo de datos en el dispositivo")
-        print("4 - Para ver el estado del calibrado del sensor")
-        print("5 - Para Recibir el archivo de datos")
-        print("6 - Guardar calibrado actual")
-        print("7 - Cargar un archivo de calibrado previo")
-    if opcion == True:
-        print("q - Parar")
-    print("0 - Salir")
+	global opcion
 
-    data = input()
-    if data == "0":
-        sock.send("Exit")
-        break
+	while True:
+		print("Elije una opcion:")
+		print()
+		if opcion == False:
+			print("1 - Recibir datos en tiempo real")
+			print("2 - Recibir datos en tiempo real (En la consola)")
+			print("3 - Para generar archivo de datos en el dispositivo")
+			print("4 - Para ver el estado del calibrado del sensor")
+			print("5 - Para Recibir el archivo de datos")
+			print("6 - Guardar calibrado actual")
+			print("7 - Cargar un archivo de calibrado previo")
+		if opcion == True:
+			print("q - Parar")
+		print("0 - Salir")
 
-    elif data == "1":
-        sock.send("Treal")
-        print("Opcion enviada")
-        """
-        
-        opcion = True
-        threads = list()
-        t = threading.Thread(target=parar)
-        threads.append(t)
-        t.start()
-        tReal()
-        """
+		data = input()
+		if data == "0":
+			sock.send("Exit")
+			break
 
-        tRealcurses()
-    elif data == "2":
-        sock.send("Treal")
-        print("Opcion enviada, pulsa enter para detener...")
-        opcion = True
-        threads = list()
-        t = threading.Thread(target=parar)
-        threads.append(t)
-        t.start()
-        tReal()
+		elif data == "1":
+			sock.send("Treal")
+			print("Opcion enviada")
+			"""
+			
+			opcion = True
+			threads = list()
+			t = threading.Thread(target=parar)
+			threads.append(t)
+			t.start()
+			tReal()
+			"""
 
-    elif data == "3":
-        opcion = True
-        sock.send("Genera")
-        print("Opcion enviada...")
+			tRealcurses(sock)
+		elif data == "2":
+			sock.send("Treal")
+			print("Opcion enviada, pulsa enter para detener...")
+			opcion = True
+			threads = list()
+			t = threading.Thread(target=parar)
+			threads.append(t)
+			t.start()
+			tReal(sock)
 
-    elif data == "4":
-        sock.send("Calibrate")
-        print("Opcion enviada, pulsa enter para detener...")
-        opcion = True
-        threads = list()
-        t = threading.Thread(target=parar)
-        threads.append(t)
-        t.start()
-        show_calibrate()
+		elif data == "3":
+			opcion = True
+			sock.send("Genera")
+			print("Opcion enviada...")
 
-    elif data == "5":
-        sock.send("Envia")
-        ret = sock.recv(1024)
-        recibido = ret.decode('utf-8')
-        if recibido == "Error":
-            print("Ningun archivo generado")
-        else:
-            sock.send("Sync")
-            recibir()
+		elif data == "4":
+			sock.send("Calibrate")
+			print("Opcion enviada, pulsa enter para detener...")
+			opcion = True
+			threads = list()
+			t = threading.Thread(target=parar)
+			threads.append(t)
+			t.start()
+			show_calibrate(sock)
 
-    elif data == "6":
-        sock.send("Save")
-        print("Calibrado guardado")
+		elif data == "5":
+			sock.send("Envia")
+			ret = sock.recv(1024)
+			recibido = ret.decode('utf-8')
+			if recibido == "Error":
+				print("Ningun archivo generado")
+			else:
+				sock.send("Sync")
+				recibir(sock)
 
-    elif data == "7":
-        sock.send("Load")
-        ret = sock.recv(1024)
-        recibido = ret.decode('utf-8')
-        if recibido == "Error1":
-            print("No hay ningun archivo de calibrado")
+		elif data == "6":
+			sock.send("Save")
+			print("Calibrado guardado")
 
-        elif recibido == "Error2":
-            print("No se ha cargado el calibrado debido a un error")
+		elif data == "7":
+			sock.send("Load")
+			ret = sock.recv(1024)
+			recibido = ret.decode('utf-8')
+			if recibido == "Error1":
+				print("No hay ningun archivo de calibrado")
 
-        else:
-            print("Archivo de calibrado cargado")
+			elif recibido == "Error2":
+				print("No se ha cargado el calibrado debido a un error")
 
-    elif data == "q":
-        if opcion == True:
-            sock.send("Stop")
-            opcion = False
-            print("Deteniendo...")
-            data2 = sock.recv(1024)
-            recibido = data2.decode('utf-8')
-            print("Server responde: ", recibido)
-            print()
-        else:
-            print("Introduce una opcion correcta...")
-    else:
-        print("Introduce una opcion correcta...")
+			else:
+				print("Archivo de calibrado cargado")
 
-sock.close()
+		elif data == "q":
+			if opcion == True:
+				sock.send("Stop")
+				opcion = False
+				print("Deteniendo...")
+				data2 = sock.recv(1024)
+				recibido = data2.decode('utf-8')
+				print("Server responde: ", recibido)
+				print()
+			else:
+				print("Introduce una opcion correcta...")
+		else:
+			print("Introduce una opcion correcta...")
+
+	sock.close()
+  
+if __name__== "__main__":
+	main()

@@ -14,11 +14,9 @@ import logging
 #logging.getLogger().setLevel(logging.INFO)
 logging.getLogger().setLevel(logging.WARNING)
 
-bno = BNO055.BNO055(serial_port='/dev/serial0', rst=17)
-if not bno.begin():
-        raise RuntimeError('Failed to initialize BNO055! Is the sensor connected?')
+cont = False
 
-def save_calibration():
+def save_calibration(bno):
     logging.info("Guardando...")
     cali = bno.get_calibration()
     with open('calibration.json', 'w') as cal_file:
@@ -27,7 +25,7 @@ def save_calibration():
     logging.info("Guardado")
     return
 
-def load_calibration():
+def load_calibration(bno):
     logging.info("Cargando...")
     with open('calibration.json', 'r') as cal_file:
         cali = json.load(cal_file)
@@ -42,7 +40,7 @@ def load_calibration():
 
     return 0
 
-def calibrate():
+def calibrate(client_sock, bno):
     #if not bno.begin():
         #raise RuntimeError('Failed to initialize BNO055! Is the sensor connected?')
     while True:
@@ -70,7 +68,7 @@ def calibrate():
     logging.info("Terminado, esperando...")
     return
 
-def tiempo_real():
+def tiempo_real(client_sock, bno):
     #Inicializacion
     bno_data = {}
     # Initialize the BNO055 and stop if something went wrong.
@@ -127,7 +125,8 @@ def tiempo_real():
     logging.info("Terminado, esperando...")
     return
 
-def guardar():
+def guardar(bno):
+    global cont
     bno_data = {}
     # Initialize the BNO055 and stop if something went wrong.
     #if not bno.begin():
@@ -179,7 +178,7 @@ def guardar():
     logging.info("Archivo generado")
     return
 
-def enviar():
+def enviar(client_sock):
     logging.info("Enviando archivo...")
     f= open("Datos_Sensor.csv","rb")
     tam = os.path.getsize("Datos_Sensor.csv")
@@ -193,82 +192,92 @@ def enviar():
     logging.info("Archivo enviado")
     
     return
-server_sock=BluetoothSocket( RFCOMM )
-server_sock.bind(("",PORT_ANY))
-server_sock.listen(1)
 
-port = server_sock.getsockname()[1]
 
-uuid = "94f39d29-7d6d-437d-973b-fba39e49d4ee"
+def main():
+    global cont
+    bno = BNO055.BNO055(serial_port='/dev/serial0', rst=17)
+    if not bno.begin():
+		    raise RuntimeError('Failed to initialize BNO055! Is the sensor connected?')
 
-advertise_service( server_sock, "SampleServer",
-                   service_id = uuid,
-                   service_classes = [ uuid, SERIAL_PORT_CLASS ],
-                   profiles = [ SERIAL_PORT_PROFILE ], 
-#                   protocols = [ OBEX_UUID ] 
-                    )
+    server_sock=BluetoothSocket( RFCOMM )
+    server_sock.bind(("",PORT_ANY))
+    server_sock.listen(1)
 
-while True:                   
-    logging.info("Esperando conexion RFCOMM en el canal %s", port)
-    client_sock, client_info = server_sock.accept()
-    logging.info("Conexion aceptada %s", client_info)
+    port = server_sock.getsockname()[1]
 
-    cont = False
+    uuid = "94f39d29-7d6d-437d-973b-fba39e49d4ee"
 
-    try:
-        while True:
-            logging.info("Esperando...")
-            data = client_sock.recv(1024)
-            recibido = data.decode('utf-8')
-            if recibido == "Exit": 
-                cont = False
-                break
-            elif recibido == "Treal":
-                cont = True
-                tiempo_real()
+    advertise_service( server_sock, "SampleServer",
+				       service_id = uuid,
+				       service_classes = [ uuid, SERIAL_PORT_CLASS ],
+				       profiles = [ SERIAL_PORT_PROFILE ], 
+    #                   protocols = [ OBEX_UUID ] 
+					    )
+    while True:                   
+        logging.info("Esperando conexion RFCOMM en el canal %s", port)
+        client_sock, client_info = server_sock.accept()
+        logging.info("Conexion aceptada %s", client_info)
 
-            elif recibido == "Calibrate":
-                cont = True
-                calibrate()
-
-            elif recibido == "Save":
-                save_calibration()
-
-            elif recibido == "Load":
-                my_file = Path("calibration.json")
-                if my_file.is_file():
-                    if load_calibration() == 0:
-                        client_sock.send("ok")
-                    else:
-                        client_sock.send("Error2")
-                else:
-                    client_sock.send("Error1")
-    
-            elif recibido == "Genera":
-                cont = True
-                threads = list()
-                t = threading.Thread(target=guardar)
-                threads.append(t)
-                t.start()
-            
-            elif recibido == "Envia":
-                my_file = Path("Datos_Sensor.csv")
-                if my_file.is_file():
-                    client_sock.send("ok")
-                    sync = client_sock.recv(1024)
-                    enviar()
-                else:
-                    logging.info("Ningun archivo generado")
-                    client_sock.send("Error")
-
-            elif recibido == "Stop":
-                if cont == True:
+        try:
+            while True:
+                logging.info("Esperando...")
+                data = client_sock.recv(1024)
+                recibido = data.decode('utf-8')
+                if recibido == "Exit": 
                     cont = False
-                    client_sock.send("Detenido")
-    except IOError:
-        pass
+                    break
+                elif recibido == "Treal":
+                    cont = True
+                    tiempo_real(client_sock, bno)
 
-    logging.info("Desconectado")
+                elif recibido == "Calibrate":
+                    cont = True
+                    calibrate(client_sock, bno)
 
-    client_sock.close()
-server_sock.close()
+                elif recibido == "Save":
+                    save_calibration(bno)
+
+                elif recibido == "Load":
+                    my_file = Path("calibration.json")
+                    if my_file.is_file():
+                        if load_calibration(bno) == 0:
+                            client_sock.send("ok")
+                        else:
+                            client_sock.send("Error2")
+                    else:
+                        client_sock.send("Error1")
+	    
+                elif recibido == "Genera":
+                    print(cont)
+                    cont = True
+                    threads = list()
+                    t = threading.Thread(target=guardar, args=[bno])
+                    threads.append(t)
+                    t.start()
+			    
+                elif recibido == "Envia":
+                    my_file = Path("Datos_Sensor.csv")
+                    if my_file.is_file():
+                        client_sock.send("ok")
+                        sync = client_sock.recv(1024)
+                        enviar(client_sock)
+                    else:
+                        logging.info("Ningun archivo generado")
+                        client_sock.send("Error")
+
+                elif recibido == "Stop":
+                    print(cont)
+                    if cont == True:
+                        cont = False
+                        client_sock.send("Detenido")
+        except IOError:
+            pass
+
+        logging.info("Desconectado")
+
+        client_sock.close()
+    server_sock.close()
+  
+if __name__== "__main__":
+    main()

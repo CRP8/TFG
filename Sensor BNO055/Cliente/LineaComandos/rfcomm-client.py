@@ -3,7 +3,8 @@ import sys
 import threading
 import curses
 import time
-
+from plot_trayectoria import *
+from pathlib import Path
 
 opcion = False
 
@@ -182,7 +183,7 @@ def main():
 		print("Buscando el servicio en %s" % addr)
 
 	# search for the SampleServer service
-	uuid = "94f39d29-7d6d-437d-973b-fba39e49d4ee"
+	uuid = "53a35f25-7f5f-337f-573d-ada35e35f3ee"
 	service_matches = find_service(uuid=uuid, address=addr)
 
 	if len(service_matches) == 0:
@@ -200,6 +201,15 @@ def main():
 	sock = BluetoothSocket(RFCOMM)
 	sock.connect((host, port))
 
+	sensor = sock.recv(1024)
+	recibido = sensor.decode('utf-8')
+	if recibido == "error":
+		print("Error: Revise el sensor e intentelo de nuevo")
+		print("Pulse enter para continuar")
+		data = input()
+		sys.exit(0)
+
+
 	global opcion
 
 	while True:
@@ -213,38 +223,43 @@ def main():
 			print("5 - Para Recibir el archivo de datos")
 			print("6 - Guardar calibrado actual")
 			print("7 - Cargar un archivo de calibrado previo")
+			print("8 - Reconstruir trayectoria")
+			print("0 - Salir")
 		if opcion == True:
 			print("q - Parar")
-		print("0 - Salir")
+		
 
 		data = input()
 		if data == "0":
-			sock.send("Exit")
-			break
+			if opcion == False:
+				sock.send("Exit")
+				break
 
 		elif data == "1":
-			sock.send("Treal")
-			print("Opcion enviada")
-			"""
-			
-			opcion = True
-			threads = list()
-			t = threading.Thread(target=parar)
-			threads.append(t)
-			t.start()
-			tReal()
-			"""
+			if opcion == False:
+				sock.send("Treal")
+				print("Opcion enviada")
+				"""
+				
+				opcion = True
+				threads = list()
+				t = threading.Thread(target=parar)
+				threads.append(t)
+				t.start()
+				tReal()
+				"""
 
-			tRealcurses(sock)
+				tRealcurses(sock)
 		elif data == "2":
-			sock.send("Treal")
-			print("Opcion enviada, pulsa enter para detener...")
-			opcion = True
-			threads = list()
-			t = threading.Thread(target=parar)
-			threads.append(t)
-			t.start()
-			tReal(sock)
+			if opcion == False:
+				sock.send("Treal")
+				print("Opcion enviada, pulsa enter para detener...")
+				opcion = True
+				threads = list()
+				t = threading.Thread(target=parar)
+				threads.append(t)
+				t.start()
+				tReal(sock)
 
 		elif data == "3":
 			opcion = True
@@ -252,42 +267,56 @@ def main():
 			print("Opcion enviada...")
 
 		elif data == "4":
-			sock.send("Calibrate")
-			print("Opcion enviada, pulsa enter para detener...")
-			opcion = True
-			threads = list()
-			t = threading.Thread(target=parar)
-			threads.append(t)
-			t.start()
-			show_calibrate(sock)
+			if opcion == False:
+				sock.send("Calibrate")
+				print("Opcion enviada, pulsa enter para detener...")
+				opcion = True
+				threads = list()
+				t = threading.Thread(target=parar)
+				threads.append(t)
+				t.start()
+				show_calibrate(sock)
 
 		elif data == "5":
-			sock.send("Envia")
-			ret = sock.recv(1024)
-			recibido = ret.decode('utf-8')
-			if recibido == "Error":
-				print("Ningun archivo generado")
-			else:
-				sock.send("Sync")
-				recibir(sock)
+			if opcion == False:
+				sock.send("Envia")
+				ret = sock.recv(1024)
+				recibido = ret.decode('utf-8')
+				if recibido == "Error":
+					print("Ningun archivo generado")
+				else:
+					sock.send("Sync")
+					recibir(sock)
 
 		elif data == "6":
-			sock.send("Save")
-			print("Calibrado guardado")
+			if opcion == False:
+				sock.send("Save")
+				print("Calibrado guardado")
 
 		elif data == "7":
-			sock.send("Load")
-			ret = sock.recv(1024)
-			recibido = ret.decode('utf-8')
-			if recibido == "Error1":
-				print("No hay ningun archivo de calibrado")
+			if opcion == False:
+				sock.send("Load")
+				ret = sock.recv(1024)
+				recibido = ret.decode('utf-8')
+				if recibido == "Error1":
+					print("No hay ningun archivo de calibrado")
 
-			elif recibido == "Error2":
-				print("No se ha cargado el calibrado debido a un error")
+				elif recibido == "Error2":
+					print("No se ha cargado el calibrado debido a un error")
 
-			else:
-				print("Archivo de calibrado cargado")
+				else:
+					print("Archivo de calibrado cargado")
 
+		elif data == "8":
+			if opcion == False:
+				my_file = Path("Datos_Sensor.csv")
+				if my_file.is_file():
+					threading.Thread(target=grafica(0, 0, 0, 0, 0)).start()
+					#grafica(x, y, z, tx, ty)
+					print("Gráficas generadas")
+				else:
+					print("No se ha generado ningun archivo")
+			
 		elif data == "q":
 			if opcion == True:
 				sock.send("Stop")

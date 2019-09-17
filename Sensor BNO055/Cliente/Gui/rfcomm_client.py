@@ -36,7 +36,7 @@ def connect(sock, direc):
         logging.info("Buscando el servicio en %s", direc)
 
     # search for the SampleServer service
-    uuid = "94f39d29-7d6d-437d-973b-fba39e49d4ee"
+    uuid = "53a35f25-7f5f-337f-573d-ada35e35f3ee"
     service_matches = find_service(uuid=uuid, address=addr)
 
     if len(service_matches) == 0:
@@ -51,6 +51,12 @@ def connect(sock, direc):
         logging.info("Conectando a %s en %s" ,name, host)
 
         sock.connect((host, port))
+		
+        sensor = sock.recv(1024)
+        recibido = sensor.decode('utf-8')
+        logging.info(recibido)
+        if recibido == "error":
+            ret = 2
 
     return ret
 

@@ -7,15 +7,19 @@ from kivy.clock import Clock
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from rfcomm_client import *
+from plot_trayectoria import *
+from pathlib import Path
 #import logging
 
-# logging.getLogger().setLevel(logging.DEBUG)
+#logging.getLogger().setLevel(logging.DEBUG)
 logging.getLogger().setLevel(logging.WARNING)
 
 
 class MainWindow(Screen):
     pass
 
+class ErrorSensor(Screen):
+    pass
 
 class Automatico(Screen):
     err1 = ObjectProperty(None)
@@ -31,6 +35,8 @@ class Automatico(Screen):
 
         if con == 0:
             sm.current = "Menu"
+        elif con == 2:
+            sm.current = "ErrorSensor"
         else:
             self.err1.text = "No se pudo encontrar el servicio"
 
@@ -52,6 +58,8 @@ class Manual(Screen):
 
         if con == 0:
             sm.current = "Menu"
+        elif con == 2:
+            sm.current = "ErrorSensor"
         else:
             self.err2.text = "No se pudo encontrar el servicio"
 
@@ -71,6 +79,18 @@ class Menu(Screen):
             sock.send("Sync")
             recibir(sock)
             fileRec()
+
+    def trayectoria(self):
+
+        my_file = Path("Datos_Sensor.csv")
+        if my_file.is_file():
+            threading.Thread(target=grafica(0, 0, 0, 0, 0)).start()
+            #grafica(0, 0, 0, 0, 0)
+            tCreada()
+        else:
+            noFile()
+	
+	
 
 
 class TiempoReal(Screen):
@@ -267,7 +287,7 @@ class Csv(Screen):
     def stop(self):
         sock.send("Stop")
         dummy = sock.recv(1024)
-
+		
 
 def noFile():
     pop = Popup(title='Error',
@@ -315,15 +335,22 @@ def saveConfig():
 def stopFirst():
     pop = Popup(title='Stop',
                 content=Label(
-                    text='Pusle el boton para parar la recepcion de datos antes'),
+                    text='Pulse el boton para parar la recepcion de datos antes'),
                 size_hint=(None, None), size=(400, 400))
     pop.open()
 
+def tCreada():
+    pop = Popup(title='Trayectoria',
+                content=Label(
+                    text='Gráficas generadas'),
+                size_hint=(None, None), size=(400, 400))
+    pop.open()
 
 kv = Builder.load_file("app.kv")
 
 sm = ScreenManager()
 sm.add_widget(MainWindow(name='Main'))
+sm.add_widget(ErrorSensor(name='ErrorSensor'))
 sm.add_widget(Automatico(name='Auto'))
 sm.add_widget(Manual(name='Manual'))
 sm.add_widget(Menu(name='Menu'))

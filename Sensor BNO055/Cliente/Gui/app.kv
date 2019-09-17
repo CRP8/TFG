@@ -21,7 +21,19 @@
                     app.root.current = "Auto"
                     root.manager.transition.direction = "left"
 
+<ErrorSensor>:
+    GridLayout:
+        cols:1
+        Label:
+            text: "Error: Revise el sensor e intentelo de nuevo"
+            font_size: (root.width**2 + root.height**2) / 14**4
 
+        GridLayout:
+            cols:1
+            Button:
+                text: "Salir"
+                on_release:
+                    app.stop()
 
 <Automatico>:
     err1 : err1
@@ -122,6 +134,13 @@
                 on_release:
                     app.root.current = "cal"
                     root.manager.transition.direction = "left"          
+
+			Button:
+     
+                text: "Reconstruir trayectoria"
+                on_release:
+                    root.trayectoria()
+
 
             Button:
      
@@ -272,6 +291,5 @@
                 app.root.current = "Menu"
                 root.manager.transition.direction = "right"
                 root.stop()
-
 
 
